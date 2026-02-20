@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>恋爱人格图鉴</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -902,6 +903,137 @@ body {
   background: #f3f4f6;
   color: #6b7280;
 }
+
+/* ========== Share Sheet ========== */
+.share-sheet {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  align-items: flex-end;
+  justify-content: center;
+}
+.share-sheet.show { display: flex; }
+.share-sheet-box {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px 32px;
+  animation: sheetUp 0.3s ease;
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.share-sheet-title {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+.share-platforms {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.share-platform {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+.share-platform-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: transform 0.2s;
+}
+.share-platform:active .share-platform-icon { transform: scale(0.92); }
+.share-platform-name {
+  font-size: 11px;
+  color: #6b7280;
+}
+.sp-wechat { background: #07c160; }
+.sp-red { background: #ff2442; }
+.sp-douyin { background: #000; }
+.sp-xianyu { background: #ffcd00; }
+
+/* Share caption area */
+.share-caption-area {
+  display: none;
+  background: #f9fafb;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.share-caption-area.show { display: block; }
+.share-caption-label {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.share-caption-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #374151;
+  white-space: pre-line;
+}
+.share-copy-btn {
+  font-size: 12px;
+  color: #a855f7;
+  background: none;
+  border: 1px solid #a855f7;
+  border-radius: 10px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+.share-copy-btn:active { background: rgba(168,85,247,0.1); }
+
+/* Save image tip */
+.share-img-tip {
+  display: none;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.share-img-tip.show { display: block; }
+.share-img-tip img {
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  margin-bottom: 8px;
+}
+.share-img-tip p {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.share-sheet-cancel {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 24px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -943,6 +1075,43 @@ body {
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Share Sheet -->
+<div class="share-sheet" id="shareSheet">
+  <div class="share-sheet-box">
+    <div class="share-sheet-title">分享到</div>
+    <div class="share-platforms">
+      <button class="share-platform" onclick="shareTo('wechat')">
+        <div class="share-platform-icon sp-wechat"><span style="color:white">微</span></div>
+        <span class="share-platform-name">微信</span>
+      </button>
+      <button class="share-platform" onclick="shareTo('red')">
+        <div class="share-platform-icon sp-red"><span style="color:white">红</span></div>
+        <span class="share-platform-name">小红书</span>
+      </button>
+      <button class="share-platform" onclick="shareTo('douyin')">
+        <div class="share-platform-icon sp-douyin"><span style="color:white">抖</span></div>
+        <span class="share-platform-name">抖音</span>
+      </button>
+      <button class="share-platform" onclick="shareTo('xianyu')">
+        <div class="share-platform-icon sp-xianyu"><span style="color:#333">鱼</span></div>
+        <span class="share-platform-name">闲鱼</span>
+      </button>
+    </div>
+    <div class="share-img-tip" id="shareImgTip">
+      <img id="shareImgPreview" src="" alt="分享图">
+      <p>长按图片保存到相册，然后去对应App发布</p>
+    </div>
+    <div class="share-caption-area" id="shareCaptionArea">
+      <div class="share-caption-label">
+        <span id="shareCaptionLabel">推荐文案</span>
+        <button class="share-copy-btn" onclick="copyCaption()">复制文案</button>
+      </div>
+      <div class="share-caption-text" id="shareCaptionText"></div>
+    </div>
+    <button class="share-sheet-cancel" onclick="closeShare()">取消</button>
+  </div>
+</div>
 
 <!-- Payment Modal: QR Code -->
 <div class="pay-modal" id="payModal">
@@ -1465,8 +1634,63 @@ function showResult() {
 }
 
 // ===== Share =====
+const shareLink = 'https://ameliamm001.github.io/love-personality-test/';
+const captions = {
+  wechat: () => `我测出来是「${types[resultType].name}」！匹配度${resultPct}%，太准了吧！\n你也来测测你是什么恋爱人格👇\n${shareLink}`,
+  red: () => `天呐这个恋爱人格测试也太准了吧！！\n我居然是「${types[resultType].name}」${types[resultType].icon}\n${types[resultType].quote}\n\n姐妹们快来测测你是什么类型～\n\n#恋爱人格 #性格测试 #恋爱人格图鉴 #趣味测试 #心理测试`,
+  douyin: () => `测了一下恋爱人格，我是「${types[resultType].name}」${types[resultType].icon}，匹配度${resultPct}%！\n${types[resultType].quote}\n你是哪种恋爱人格？评论区告诉我～\n\n#恋爱人格图鉴 #性格测试 #恋爱人格 #心理测试`,
+  xianyu: () => `【恋爱人格图鉴】趣味性格测试\n测测你是哪种恋爱人格？6种类型等你解锁！\n我测出来是「${types[resultType].name}」，准到离谱！\n${shareLink}`
+};
+
 function shareResult() {
-  showToast('长按截图即可分享给好友');
+  document.getElementById('shareImgTip').classList.remove('show');
+  document.getElementById('shareCaptionArea').classList.remove('show');
+  document.getElementById('shareSheet').classList.add('show');
+}
+
+function closeShare() {
+  document.getElementById('shareSheet').classList.remove('show');
+}
+
+function shareTo(platform) {
+  // Show caption
+  const caption = captions[platform]();
+  document.getElementById('shareCaptionText').textContent = caption;
+  const labelMap = { wechat: '微信文案', red: '小红书文案', douyin: '抖音文案', xianyu: '闲鱼文案' };
+  document.getElementById('shareCaptionLabel').textContent = labelMap[platform];
+  document.getElementById('shareCaptionArea').classList.add('show');
+
+  // Generate share image
+  const card = document.getElementById('shareCard');
+  if (card && typeof html2canvas !== 'undefined') {
+    document.getElementById('shareImgTip').classList.remove('show');
+    html2canvas(card, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: null,
+      borderRadius: 24
+    }).then(canvas => {
+      const img = document.getElementById('shareImgPreview');
+      img.src = canvas.toDataURL('image/png');
+      document.getElementById('shareImgTip').classList.add('show');
+    });
+  }
+}
+
+function copyCaption() {
+  const text = document.getElementById('shareCaptionText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('文案已复制');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('文案已复制');
+  });
 }
 
 // ===== Unlock Code System =====
