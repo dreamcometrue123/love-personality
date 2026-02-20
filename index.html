@@ -1114,16 +1114,35 @@ body {
   </div>
 </div>
 
-<!-- Payment Modal: QR Code -->
+<!-- Payment Modal: QR Code + Amount Verify -->
 <div class="pay-modal" id="payModal">
   <div class="pay-modal-box" id="payModalContent">
-    <!-- QR Pay View (default) -->
-    <div id="qrPayView">
-      <div style="font-size:13px;color:#9ca3af;margin-bottom:8px;">微信扫码支付</div>
-      <img src="pay-qr.jpg" style="width:200px;height:200px;border-radius:12px;object-fit:cover;margin-bottom:8px;">
-      <div style="font-size:22px;font-weight:800;color:#1f2937;margin-bottom:12px;">¥1.99</div>
-      <button class="pay-modal-btn pay-modal-confirm" onclick="confirmPaid()">我已支付，解锁报告</button>
+    <!-- Step 1: Show QR + random amount -->
+    <div id="payStep1">
+      <div style="font-size:13px;color:#9ca3af;margin-bottom:6px;">微信扫码支付</div>
+      <img src="pay-qr.jpg" style="width:180px;height:180px;border-radius:12px;object-fit:cover;margin-bottom:8px;">
+      <div style="font-size:12px;color:#ef4444;font-weight:600;margin-bottom:4px;">请支付精确金额</div>
+      <div style="font-size:28px;font-weight:900;color:#1f2937;margin-bottom:4px;" id="payAmountDisplay">¥0.00</div>
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:14px;">金额精确到分，用于自动验证支付</div>
+      <button class="pay-modal-btn pay-modal-confirm" onclick="goVerify()">已支付，去验证</button>
       <button class="pay-modal-btn pay-modal-cancel" onclick="closePay()">稍后再说</button>
+    </div>
+    <!-- Step 2: Enter amount to verify -->
+    <div id="payStep2" style="display:none;">
+      <div style="font-size:36px;margin-bottom:8px;">🔐</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">支付验证</div>
+      <div style="font-size:13px;color:#9ca3af;margin-bottom:16px;">请输入你实际支付的金额（精确到分）</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;">
+        <span style="font-size:20px;font-weight:700;color:#374151;">¥</span>
+        <input type="text" id="verifyAmountInput" inputmode="decimal" placeholder="0.00" style="
+          width:120px; height:48px; border:2px solid #e5e7eb; border-radius:14px;
+          padding:0 12px; font-size:22px; font-weight:700; text-align:center;
+          outline:none; transition: border-color 0.3s;
+        " onfocus="this.style.borderColor='#a855f7'" onblur="this.style.borderColor='#e5e7eb'">
+      </div>
+      <div id="verifyError" style="font-size:12px;color:#ef4444;height:24px;line-height:24px;"></div>
+      <button class="pay-modal-btn pay-modal-confirm" onclick="verifyAmount()">确认验证</button>
+      <button class="pay-modal-btn pay-modal-cancel" onclick="backToQr()">返回扫码</button>
     </div>
   </div>
 </div>
@@ -1529,15 +1548,6 @@ function showResult() {
       </div>
     </div>
 
-    <!-- Share CTA -->
-    <div class="share-cta">
-      <div class="share-cta-text">截图分享到朋友圈，看看好友是什么恋爱人格</div>
-      <div class="share-cta-btns">
-        <button class="btn-retest" onclick="startQuiz()">重新测试</button>
-        <button class="btn-save" onclick="shareResult()">保存分享</button>
-      </div>
-    </div>
-
     <!-- ===== FREE BRIEF ===== -->
     <div class="brief-section">
       <div class="brief-card">
@@ -1768,18 +1778,56 @@ function copyCaption() {
   });
 }
 
-// ===== Payment =====
+// ===== Payment with Amount Verification =====
+let payAmount = 0;
+
+function generatePayAmount() {
+  // Random amount between 1.91 and 2.09
+  const cents = Math.floor(Math.random() * 19) + 91; // 91-109
+  if (cents >= 100) return (cents / 100 + 1).toFixed(2); // 2.00-2.09
+  return (cents / 100 + 1).toFixed(2); // 1.91-1.99
+}
+
 function openPay() {
+  payAmount = generatePayAmount();
+  document.getElementById('payAmountDisplay').textContent = '¥' + payAmount;
+  document.getElementById('payStep1').style.display = '';
+  document.getElementById('payStep2').style.display = 'none';
   document.getElementById('payModal').classList.add('show');
 }
 function closePay() {
   document.getElementById('payModal').classList.remove('show');
 }
-function confirmPaid() {
-  closePay();
-  showToast('解锁成功！');
-  localStorage.setItem('lv_unlocked', '1');
-  unlockReport();
+function goVerify() {
+  document.getElementById('payStep1').style.display = 'none';
+  document.getElementById('payStep2').style.display = '';
+  document.getElementById('verifyAmountInput').value = '';
+  document.getElementById('verifyError').textContent = '';
+  setTimeout(() => document.getElementById('verifyAmountInput').focus(), 200);
+}
+function backToQr() {
+  document.getElementById('payStep1').style.display = '';
+  document.getElementById('payStep2').style.display = 'none';
+}
+function verifyAmount() {
+  const input = document.getElementById('verifyAmountInput').value.trim();
+  if (!input) {
+    document.getElementById('verifyError').textContent = '请输入支付金额';
+    return;
+  }
+  const entered = parseFloat(input).toFixed(2);
+  if (entered === payAmount) {
+    closePay();
+    showToast('验证通过，报告已解锁！');
+    localStorage.setItem('lv_unlocked', '1');
+    unlockReport();
+  } else {
+    document.getElementById('verifyError').textContent = '金额不正确，请核对支付记录后重试';
+    document.getElementById('verifyAmountInput').style.borderColor = '#ef4444';
+    setTimeout(() => {
+      document.getElementById('verifyAmountInput').style.borderColor = '#e5e7eb';
+    }, 1500);
+  }
 }
 
 function unlockReport() {
