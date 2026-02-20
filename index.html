@@ -1487,7 +1487,8 @@ function showResult() {
   resultType = maxType;
   resultPct = percentage;
   const t = types[maxType];
-  const rarePct = Math.min(12, Math.max(3, Math.round(100 - percentage + Math.random() * 5)));
+  const rareBase = { healing: 18, adventure: 9, rational: 11, romantic: 15, guardian: 7, soulmate: 5 };
+  const rarePct = (rareBase[maxType] || 10) + Math.floor(Math.random() * 4) - 1;
 
   // Build color for compatibility bars
   const compatColors = {
@@ -1599,19 +1600,6 @@ function showResult() {
         <div style="font-size:13px;line-height:2;color:#4b5563;white-space:pre-line;padding:8px 14px;background:linear-gradient(135deg,rgba(236,72,153,0.04),rgba(168,85,247,0.04));border-radius:14px;">${t.toFuturePartner}</div>
       </div>
     </div>
-
-    <!-- 保存长图按钮 -->
-    <div style="text-align:center;padding:24px 0 40px;">
-      <button onclick="saveLongImage()" style="
-        display:inline-flex;align-items:center;gap:8px;
-        padding:14px 36px;border:none;border-radius:50px;
-        background:linear-gradient(135deg,#ec4899,#a855f7);
-        color:#fff;font-size:15px;font-weight:700;
-        box-shadow:0 4px 20px rgba(168,85,247,0.35);
-        cursor:pointer;letter-spacing:0.5px;
-      ">📷 保存图片</button>
-      <div style="font-size:11px;color:#9ca3af;margin-top:8px;">长按或点击保存完整结果图</div>
-    </div>
   `;
 
   document.getElementById('resultScreen').innerHTML = resultHTML;
@@ -1677,40 +1665,6 @@ function shareResult() {
       document.getElementById('shareImgTip').classList.remove('show');
       document.getElementById('shareCaptionArea').classList.remove('show');
     }, 500);
-  });
-}
-
-// ===== Save Long Image =====
-function saveLongImage() {
-  const el = document.getElementById('resultScreen');
-  if (!el || typeof html2canvas === 'undefined') {
-    showToast('正在加载，请稍后再试');
-    return;
-  }
-  showToast('正在生成长图，请稍候...');
-  // Temporarily hide the save button itself so it doesn't appear in the screenshot
-  const saveBtn = el.querySelector('[onclick="saveLongImage()"]');
-  const saveBtnParent = saveBtn ? saveBtn.parentElement : null;
-  if (saveBtnParent) saveBtnParent.style.display = 'none';
-
-  html2canvas(el, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#fdf2f8',
-    scrollY: -window.scrollY,
-    windowWidth: el.scrollWidth,
-    windowHeight: el.scrollHeight
-  }).then(canvas => {
-    if (saveBtnParent) saveBtnParent.style.display = '';
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = '恋爱人格图鉴-完整报告.png';
-    link.href = dataUrl;
-    link.click();
-    showToast('长图已保存！');
-  }).catch(() => {
-    if (saveBtnParent) saveBtnParent.style.display = '';
-    showToast('保存失败，请重试');
   });
 }
 
