@@ -1487,9 +1487,6 @@ function showResult() {
   resultType = maxType;
   resultPct = percentage;
   const t = types[maxType];
-  const rareBase = { healing: 18, adventure: 9, rational: 11, romantic: 15, guardian: 7, soulmate: 5 };
-  const rarePct = (rareBase[maxType] || 10) + Math.floor(Math.random() * 4) - 1;
-
   // Build color for compatibility bars
   const compatColors = {
     healing: '#f59e0b', adventure: '#ef4444', rational: '#3b82f6',
@@ -1500,7 +1497,6 @@ function showResult() {
     <!-- ===== SHARE CARD (screenshot-optimized) ===== -->
     <div class="share-card ${t.theme}" id="shareCard">
       <div class="share-card-inner">
-        <div class="share-rank">全网仅 ${rarePct}% 同款恋人 · 稀有人格</div>
         <div class="share-pct">${percentage}<span class="share-pct-sign">%</span></div>
         <div class="share-type-icon">${t.icon}</div>
         <div class="share-type-name">${t.name}</div>
